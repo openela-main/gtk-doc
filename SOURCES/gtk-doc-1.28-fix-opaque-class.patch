@@ -1,0 +1,38 @@
+From c8c288ab35f913603fb3f49dd4141aacbd7e8562 Mon Sep 17 00:00:00 2001
+From: Lubomir Rintel <lkundrak@v3.sk>
+Date: Fri, 29 Jun 2018 21:45:28 +0200
+Subject: [PATCH] scan: set title also when the class structure is opaque
+
+libnm doesn't like to include the structure definitions of many object
+types in a public header, since they're not supposed to be subclassed
+and maintaining a stable ABI would me a maintanance burden:
+
+nm-setting-user.c: struct _NMSettingUserClass { ... };
+nm-setting-user.h: typedef struct _NMSettingUserClass NMSettingUserClass;
+
+However, gtkdoc-scan only sets <TITLE> for Class/Iface typedefs only when the
+structs are defined in the header. Fix that.
+---
+ gtkdoc/scan.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/gtkdoc/scan.py b/gtkdoc/scan.py
+index f1f1672..b59dd17 100644
+--- a/gtkdoc/scan.py
++++ b/gtkdoc/scan.py
+@@ -434,6 +434,12 @@ def ScanHeader(input_file, section_list, decl_list, get_types, options):
+                 forward_decls[m9.group(2)] = '<%s>\n<NAME>%s</NAME>\n%s</%s>\n' % (
+                     structsym, m9.group(2), deprecated, structsym)
+ 
++                bm = re.search(r'^(\S+)(Class|Iface|Interface)\b', m9.group(2))
++                if bm:
++                    objectname = bm.group(1)
++                    logging.info('Found object: "%s"', objectname)
++                    title = '<TITLE>%s</TITLE>' % objectname
++
+             elif re.search(r'^\s*(?:struct|union)\s+_(\w+)\s*;', line):
+                 # Skip private structs/unions.
+                 logging.info('private struct/union')
+-- 
+GitLab
+

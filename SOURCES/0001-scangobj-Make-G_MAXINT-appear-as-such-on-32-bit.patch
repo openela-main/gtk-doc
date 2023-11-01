@@ -1,0 +1,38 @@
+From 12f8e2014309403afc3bceabcea5e38b29fe5447 Mon Sep 17 00:00:00 2001
+From: Bastien Nocera <hadess@hadess.net>
+Date: Tue, 4 Sep 2018 09:50:15 +0200
+Subject: [PATCH] scangobj: Make G_MAXINT appear as such on 32-bit
+
+Don't overwrite the boundaries of integer properties when they match
+both G_MAXINT and G_MAXLONG. This also fixes a memory leak in the
+generated scanobj code.
+
+Closes: #49
+---
+ gtkdoc/scangobj.py | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/gtkdoc/scangobj.py b/gtkdoc/scangobj.py
+index 237863c..73c23b0 100644
+--- a/gtkdoc/scangobj.py
++++ b/gtkdoc/scangobj.py
+@@ -690,10 +690,12 @@ describe_unsigned_constant (gsize size, guint64 value)
+         else if (value == G_MAXUINT)
+           desc = g_strdup ("G_MAXUINT");
+       }
+-      if (value == (guint64)G_MAXLONG)
+-        desc = g_strdup ("G_MAXLONG");
+-      else if (value == G_MAXULONG)
+-        desc = g_strdup ("G_MAXULONG");
++      if (desc == NULL) {
++        if (value == (guint64)G_MAXLONG)
++          desc = g_strdup ("G_MAXLONG");
++        else if (value == G_MAXULONG)
++          desc = g_strdup ("G_MAXULONG");
++      }
+       break;
+     case 8:
+       if (value == G_MAXINT64)
+-- 
+2.29.2
+
